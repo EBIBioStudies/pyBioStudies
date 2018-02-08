@@ -1,0 +1,10 @@
+
+/virtual_env/
+/AEout/
+/experiments/
+/arrays/
+/settings/local.py
+/settings/test.py
+/settings/base.py
+/settings/bashrc
+/.idea/
