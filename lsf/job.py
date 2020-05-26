@@ -10,17 +10,18 @@ __author__ = 'Ahmed G. Ali'
 
 
 class Job:
-    def __init__(self, name, command, queue='', user='', memory=10, stdout=None, stderr=None):
+    def __init__(self, name, command, queue='', user='', memory=10, stdout=None, stderr=None, start_time=None):
         args = locals()  # dict of local names
         self.__dict__.update(args)  # __dict__ holds and object's attributes
         del self.__dict__["self"]
+        self.start_time=start_time
         self.job_id = None
         self.cmd = None
         self.name = name
         # print(self.cmd)
         self.submitted = False
         self.out = None
-        self.error = None
+        self.error = ''
         tmp_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tmp'))
         if stdout is None:
             self.stdout = os.path.join(tmp_dir, str(uuid.uuid4()))
@@ -29,7 +30,7 @@ class Job:
             self.stderr = os.path.join(tmp_dir, str(uuid.uuid4()))
 
         self.build_command()
-        print(self.cmd)
+        # print(self.cmd)
         # print(self.stdout)
         # print(self.stderr)
         # exit()
@@ -51,13 +52,19 @@ class Job:
 
     def submit(self):
         out, err = execute_command(self.cmd)
+        # print(self.cmd)
+        # print(out.decode())
+        # print(err.decode())
+        # exit()
         if out:
             self.job_id = out.split('<')[1].split('>')[0]
         self.submitted = True
 
     def is_alive(self):
         if self.submitted:
-            out, err = execute_command('bjobs %s' % self.job_id)
+            cmd = 'bjobs %s' % self.job_id
+            # print(cmd)
+            out, err = execute_command(cmd)
             # print(out, err)
             status = [i for i in out.split('\n')[1].split(' ') if i != ''][2]
 

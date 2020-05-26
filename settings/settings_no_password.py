@@ -18,3 +18,11 @@ AE2 = {
     'password': '',
 
 }
+ENA = {
+    'name': 'ERAPRO',
+    'host': 'ora-vm-009.ebi.ac.uk',
+    'port': '1541',
+    'username': '',
+    'password': ''
+
+}
