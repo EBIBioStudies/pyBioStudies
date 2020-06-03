@@ -24,6 +24,9 @@ def extract_args():
     parser.add_argument('-sc',
                         '--skip_copy',action='store_true',
                         help='Skip copying files to user directory')
+    parser.add_argument('-sr',
+                        '--skip_remove',action='store_true',
+                        help='Skip removing files after submission')
     return parser.parse_args()
 
 
@@ -33,6 +36,7 @@ def main():
 
     tmp_dir = os.path.join(MAGIC_DIR, args.accession)
     skip_copy = args.skip_copy
+    skip_remove = args.skip_remove
     if os.path.exists(tmp_dir):
         execute_command('chmod 777 -R ' + tmp_dir)
         execute_command('rm -rf ' + tmp_dir)
@@ -80,14 +84,15 @@ def main():
         print(err)
         update_owner(args.accession, bst_usr['id'])
         # remove_ftp_dir(MAGIC_DIR + '/' + args.accession)
-
-        execute_command('chmod 777 -R ' + tmp_dir)
-        execute_command('rm -rf '+tmp_dir)
+        if not skip_remove:
+            execute_command('chmod 777 -R ' + tmp_dir)
+            execute_command('rm -rf '+tmp_dir)
         # remove_dir(magic_dir, tmp_dir)
     except Exception as e:
         print(e)
-        execute_command('chmod 777 -R ' + tmp_dir)
-        execute_command('rm -rf ' + tmp_dir)
+        if not skip_remove:
+            execute_command('chmod 777 -R ' + tmp_dir)
+            execute_command('rm -rf ' + tmp_dir)
         raise
 
 

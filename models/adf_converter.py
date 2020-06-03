@@ -146,4 +146,4 @@ class ADFConverter:
 
 
 if __name__ == '__main__':
-    adf_convert = ADFConverter('A-MTAB-600', '/tmp/A-MTAB-600')
+    adf_convert = ADFConverter('A-MEXP-2255', '/tmp/A-MEXP-2255')

@@ -105,8 +105,11 @@ class IDF:
         if idf_path:
             self.__load_idf()
         self.accession = accession
-        if not hasattr(self, 'public_release_date'):
+        # if not hasattr(self, 'public_release_date'):
+        try:
             self.public_release_date = [retrieve_release_date(self.accession)[0]['releasedate'].date().isoformat()]
+        except:
+            raise Exception('No release Date in IDF and in DB')
         self.experiment = IDFElementSingle(dict([i for i in self.__dict__.items() if i[0].startswith('experiment')]),
                                            'experiment')
         self.persons = IDFElementMultiple(dict([i for i in self.__dict__.items() if i[0].startswith('person')]),
