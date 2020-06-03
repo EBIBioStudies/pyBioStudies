@@ -83,12 +83,13 @@ class Section:
 
 
 class PageTab:
-    def __init__(self, title, accession, release_date, out_dir):
+    def __init__(self, title, accession, release_date, out_dir, is_double_blind = False):
         self.title = title
         self.accession = accession
         self.release_date = release_date
         self.out_dir = out_dir
         self.sections = []
+        self.is_double_blind = is_double_blind
 
     def export(self):
 
@@ -96,7 +97,10 @@ class PageTab:
                          'Title\t' + self.title,
                          'ReleaseDate\t' + self.release_date,
                          'RootPath\t' + self.accession,
-                         'AttachTo\tArrayExpress', '\n'])
+                         'AttachTo\tArrayExpress'])
+        if self.is_double_blind:
+            txt += '\nReviewType\tDoubleBlind\n'
+        txt += '\n'
         file_lists = []
         for section in self.sections:
             section.out_dir = self.out_dir
