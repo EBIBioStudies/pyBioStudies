@@ -80,6 +80,7 @@ class MAGETABConverter:
             if e_type:
                 self.is_microarray = is_microarray(e_type)
                 self.tags = self.efo.get_tags([e_type])
+            self.is_anonymous_review = True if getattr(self.idf.comments[0], 'AEAnonymousReview'.lower()) else False
 
         self.sdrf = []
         # print(dir(self.idf))
@@ -97,7 +98,8 @@ class MAGETABConverter:
         self.page_tab = PageTab(title=self.idf.investigation_title[0],
                                 accession=self.accession,
                                 release_date=self.idf.public_release_date[0],
-                                out_dir=self.out_dir)
+                                out_dir=self.out_dir,
+                                is_double_blind=self.is_anonymous_review)
         self.technologies = []
         self.molecules = []
         self.types = []
