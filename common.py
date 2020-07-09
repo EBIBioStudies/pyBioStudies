@@ -224,9 +224,9 @@ def truncate_dir(tmp_dir):
         # print('=' * 30)
 
 
-if __name__ == '__main__':
-    # move_dir('/nfs/biostudies/pyBiostudies/tmp/E-MTAB-6268', 'E-MTAB-6268', '2b/4c944c-7bd9-4d46-a345-8697c3eaaccf-a13', True)
-    register_user('E-GEOD-537')
+# if __name__ == '__main__':
+#     # move_dir('/nfs/biostudies/pyBiostudies/tmp/E-MTAB-6268', 'E-MTAB-6268', '2b/4c944c-7bd9-4d46-a345-8697c3eaaccf-a13', True)
+#     register_user('E-GEOD-537')
 
 
 def fix_encoding(file_path):
@@ -255,4 +255,4 @@ def fix_encoding(file_path):
 
 
 if __name__ == '__main__':
-    register_user('E-MTAB-7922')
+    register_user('E-MTAB-5200')

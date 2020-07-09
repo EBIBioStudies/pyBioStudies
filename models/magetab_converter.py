@@ -80,7 +80,7 @@ class MAGETABConverter:
             if e_type:
                 self.is_microarray = is_microarray(e_type)
                 self.tags = self.efo.get_tags([e_type])
-            self.is_anonymous_review = True if getattr(self.idf.comments[0], 'AEAnonymousReview'.lower()) else False
+            self.is_anonymous_review = True if getattr(self.idf.comments[0], 'AEAnonymousReview'.lower(), None) else False
 
         self.sdrf = []
         # print(dir(self.idf))
@@ -303,6 +303,16 @@ class MAGETABConverter:
 
     def study_section(self):
 
+        section_fields = OrderedDict([
+            ("Title", self.idf.investigation_title[0]),
+            ("Types", self.types),
+            ("Organism", self.organisms),
+            ("Description", getattr(self.idf, 'experiment_description', '')),
+            # ("Assay count", len(list(set([r.assay_name for r in self.sdrf[0].rows if r.assay_name is not None])))),
+            # ("Sample count", len(list(set([r.source for r in self.sdrf[0].rows])))),
+            # ("Experimental Factor count", len(getattr(self.idf, 'experimental_factor_name', []))),
+
+        ])
         for k, v in self.tags.items():
             self.technologies += v['technology']
             self.molecules += v['molecule']
@@ -312,16 +322,6 @@ class MAGETABConverter:
                       extras=[["[Ontology]", "EFO"], ["[TermId]", v['id']]]
                       )
             )
-        section_fields = OrderedDict([
-            ("Title", self.idf.investigation_title[0]),
-            ("Types", self.types),
-            ("Description", getattr(self.idf, 'experiment_description', '')),
-            ("Organism", self.organisms),
-            # ("Assay count", len(list(set([r.assay_name for r in self.sdrf[0].rows if r.assay_name is not None])))),
-            # ("Sample count", len(list(set([r.source for r in self.sdrf[0].rows])))),
-            # ("Experimental Factor count", len(getattr(self.idf, 'experimental_factor_name', []))),
-
-        ])
         # tags = self.tags_section()
         # section_fields.update(tags)
         extra_tables = [self.protocols(parent_id='s-' + self.accession)] + self.study_links(
@@ -377,6 +377,7 @@ class MAGETABConverter:
 
     def author(self):
         organizations = []
+        added_authors = []
         for i in range(len(self.idf.persons)):
             person = self.idf.persons[i]
             if not (hasattr(person, 'first_name') and hasattr(person, 'last_name')):
@@ -386,7 +387,9 @@ class MAGETABConverter:
             author_name = person.first_name + ' ' + person.last_name
             if not author_name.strip():
                 continue
-
+            if author_name in added_authors:
+                continue
+            added_authors.append(author_name)
             section_fields = OrderedDict([
                 ("Name", author_name),
                 ("Email", getattr(person, 'email', '')),
@@ -452,6 +455,10 @@ class MAGETABConverter:
                 row.append(get_ena_link(v['runs']))
                 if '[url]' not in header:
                     header.append('[url]')
+            else:
+                row.append(' or '.join(v['files']))
+                if '[search]' not in header:
+                    header.append('[search]')
             rows.append(row)
             # print(ret_txt)
             # exit()
@@ -479,12 +486,13 @@ class MAGETABConverter:
             index = header.index(c)
             for i in sdrf_content[1:]:
                 line = i.split('\t')
-                sample = [line[x] for x in idx]
+                if len(line) <= index:
+                    continue
+                sample = [(line[x], line[index]) for x in idx]
                 if sample in samples:
                     continue
                 samples.append(sample)
-                if len(line) <= index:
-                    continue
+
                 if c in vals.keys():
                     vals[c].append(line[index])
                 else:
@@ -531,10 +539,13 @@ class MAGETABConverter:
 
                 sample = '-'.join(line[a] for a in idx)
                 run_index = None
+                raw_index = None
                 if not self.is_microarray and 'Comment [ENA_SAMPLE]' in header:
                     run_index = header.index('Comment [ENA_SAMPLE]')
                 if not self.is_microarray and 'Comment[ENA_SAMPLE]' in header:
                     run_index = header.index('Comment[ENA_SAMPLE]')
+                if "Array Data File" in header:
+                    raw_index = header.index("Array Data File")
 
                 if tuple(vals) in s_char_dict.keys():
                     s_char_dict[tuple(vals)]["samples"].append(sample)
@@ -542,9 +553,12 @@ class MAGETABConverter:
                         s_char_dict[tuple(vals)]['runs'].append(line[run_index])
 
                 else:
-                    s_char_dict[tuple(vals)] = {"samples": [sample]}
+                    s_char_dict[tuple(vals)] = {"samples": [sample], "files": []}
                     if not self.is_microarray and run_index:
                         s_char_dict[tuple(vals)]['runs'] = [line[run_index]]
+                if raw_index:
+                    s_char_dict[tuple(vals)]["files"].append(line[raw_index])
+
 
         for tup in s_char_dict.keys():
             for i in range(len(tup)):
@@ -830,7 +844,10 @@ if __name__ == '__main__':
     # converter = MAGETABConverter('E-MTAB-5555', '/tmp/E-MTAB-5555')
     # converter = MAGETABConverter('E-MTAB-7922', '/tmp/E-MTAB-7922')
     # converter = MAGETABConverter('E-MTAB-6302', '/tmp/E-MTAB-6302')
-    converter = MAGETABConverter('E-MTAB-8888', '/tmp/E-MTAB-8888')
+    # converter = MAGETABConverter('E-MTAB-8888', '/tmp/E-MTAB-8888')
+    # converter = MAGETABConverter('E-GEOD-62606', '/tmp/E-GEOD-62606')
+    # converter = MAGETABConverter('E-MTAB-8846', '/tmp/E-MTAB-8846')
+    converter = MAGETABConverter('E-MTAB-10', '/tmp/E-MTAB-10')
     file_lists = converter.page_tab.export()
     print(file_lists)
     # f = open(os.path.join(converter.out_dir, 'E-MTAB-5782.pagetab.tsv'), 'w')

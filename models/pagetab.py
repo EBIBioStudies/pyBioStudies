@@ -35,7 +35,7 @@ class Section:
     def __str__(self):
         if not self.fields and len(self.table) < 2:
             return ''
-        lines = ['{}\t{}\t{}'.format(self.name, self.id, self.parent)]
+        lines = ['\t'.join([i for i in [self.name, self.id, self.parent] if i])]
         # lines = ['{}\t{}'.format()]
         # lines = ['{}\t{}'.format()]
 
@@ -46,10 +46,10 @@ class Section:
                         lines += val.get_lines()
                     else:
                         if val:
-                            lines.append('{}\t{}'.format(k, val))
+                            lines.append('\t'.join([i for i in [k, val] if i]))
             else:
                 if v:
-                    lines.append('{}\t{}'.format(k, str(v)))
+                    lines.append('\t'.join([i for i in [k, str(v)] if i]))
         if self.table:
             if self.table[0][0] == 'Files' and len(self.table) > 1000:
                 self.file_list = self.id + '_filelist'
@@ -83,7 +83,7 @@ class Section:
 
 
 class PageTab:
-    def __init__(self, title, accession, release_date, out_dir, is_double_blind = False):
+    def __init__(self, title, accession, release_date, out_dir, is_double_blind=False):
         self.title = title
         self.accession = accession
         self.release_date = release_date
@@ -100,7 +100,7 @@ class PageTab:
                          'AttachTo\tArrayExpress'])
         if self.is_double_blind:
             txt += '\nReviewType\tDoubleBlind\n'
-        txt += '\n'
+        txt += '\n\n'
         file_lists = []
         for section in self.sections:
             section.out_dir = self.out_dir

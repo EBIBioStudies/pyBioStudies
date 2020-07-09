@@ -12,7 +12,7 @@ from settings import *
 
 __author__ = 'Ahmed G. Ali'
 
-BACKEND_PATH = '/nfs/biostudies/.adm/databases/dev/submission'
+BACKEND_PATH = '/nfs/biostudies/.adm/databases/beta/submission'
 
 
 def main():

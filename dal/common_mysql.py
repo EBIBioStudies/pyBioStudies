@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 __author__ = 'Ahmed G. Ali'
+
 import MySQLdb as mdb
 
 
@@ -37,7 +38,6 @@ def execute_select(sql_stmt, db):
     except mdb.Error as e:
         print(sql_stmt)
         print("Error %d: %s" % (e.args[0], e.args[1]))
-        raise
     finally:
         if con:
             con.close()
@@ -61,7 +61,7 @@ def execute_insert(sql_stmt, db):
         con.commit()
     except mdb.Error as e:
 
-        print ("Error %d: %s" % (e.args[0], e.args[1]))
+        print("Error %d: %s" % (e.args[0], e.args[1]))
     finally:
         if con:
             con.close()

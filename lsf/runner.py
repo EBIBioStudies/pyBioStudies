@@ -37,12 +37,13 @@ class Experiment:
         self.acc = acc
 
 
-def get_exp_command(acc):
+def get_exp_command(acc, skip_copy=False):
     cmd = "export PYTHONPATH=\"${PYTHONPATH}:/nfs/biostudies/pyBiostudies\"; export " \
           "LD_LIBRARY_PATH=/nfs/biostudies/instantclient_12_2:$LD_LIBRARY_PATH;source " \
           "/nfs/biostudies/pyBiostudies/virtual_env/bin/activate;python /nfs/biostudies/pyBiostudies/pagetab_loader.py" \
           " " + acc
-
+    if skip_copy:
+        cmd += ' -sc'
     return cmd
 
 
@@ -82,13 +83,14 @@ def main(acc=None, limit=0, ):
     # added_arrays = {}
     # exp_to_load = [i for i in exp if i not in added_experiments ]
     exp_to_load = list(set(exp).difference(set(added_experiments)))
+    # exp_to_load = exp
     print('Loading %d Experiments' % len(exp_to_load))
 
     counter = -1
     if exp_to_load:
         # while True and counter < limit:
         while True:
-            while len(jobs) <= 30 and exp_to_load and counter < limit:
+            while len(jobs) <= 20 and exp_to_load and counter < limit:
                 d = exp_to_load.pop()
 
                 if d in in_run:
@@ -102,7 +104,10 @@ def main(acc=None, limit=0, ):
                 # a_d = os.path.join(settings.LOAD_DIR, d.split('-')[1], d)
                 # if os.path.isdir(a_d):
                 in_run.append(d)
-                job = Job(name=d, command=get_exp_command(acc=d),
+                skip_copy = False
+                if d in added_experiments:
+                    skip_copy = True
+                job = Job(name=d, command=get_exp_command(acc=d, skip_copy=skip_copy),
                           queue=settings.LSF_QUEUE, user=settings.LSF_USER, memory=3072,
                           start_time=datetime.datetime.utcnow().isoformat())
                 job.submit()
@@ -124,7 +129,7 @@ def main(acc=None, limit=0, ):
                     live = False
                     f_logger.writelines(['\t'.join([j.name, j.start_time, datetime.datetime.utcnow().isoformat(),
 
-                                                    "%s" % (str(e) + j.error)])+'\n'])
+                                                    "%s" % (str(e) + j.error)]) + '\n'])
 
                     # logger.error(str(e) + j.error)
                 if not live:
