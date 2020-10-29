@@ -43,8 +43,13 @@ def insert_gxa_link(acc, section_id, link_type, dscr):
 
 def get_ae_submissions():
 
-    sql = """SELECT s.* FROM SubmissionAttribute sa join Submission s on s.id = sa.submission_id 
-    where name = 'AttachTo' and value = 'ArrayExpress';"""
+    # sql = """SELECT s.* FROM SubmissionAttribute sa join Submission s on s.id = sa.submission_id
+    # where name = 'AttachTo' and value = 'ArrayExpress';"""
+    sql = """SELECT s.* FROM 
+    Submission_AccessTag sa join 
+    Submission s on sa.Submission_id = s.id 
+    join AccessTag t on sa.accessTags_id = t.id 
+    where t.name = 'ArrayExpress'  and s.accNo <> 'ArrayExpress'"""
 
     return execute_select(sql, db)
 

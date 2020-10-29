@@ -59,7 +59,6 @@ def main(acc=None, limit=0, ):
     exp = []
     in_run = []
     # loaded_exps = []
-    added_experiments = []
     if acc:
         for a in acc:
             exp.append(a)
@@ -82,15 +81,15 @@ def main(acc=None, limit=0, ):
     # added_experiments = []
     # added_arrays = {}
     # exp_to_load = [i for i in exp if i not in added_experiments ]
-    exp_to_load = list(set(exp).difference(set(added_experiments)))
-    # exp_to_load = exp
+    # exp_to_load = list(set(exp).difference(set(added_experiments)))
+    exp_to_load = exp
     print('Loading %d Experiments' % len(exp_to_load))
-
+    # exit()
     counter = -1
     if exp_to_load:
         # while True and counter < limit:
         while True:
-            while len(jobs) <= 20 and exp_to_load and counter < limit:
+            while len(jobs) < 100 and exp_to_load and counter < limit:
                 d = exp_to_load.pop()
 
                 if d in in_run:
@@ -104,7 +103,7 @@ def main(acc=None, limit=0, ):
                 # a_d = os.path.join(settings.LOAD_DIR, d.split('-')[1], d)
                 # if os.path.isdir(a_d):
                 in_run.append(d)
-                skip_copy = False
+                skip_copy = True
                 if d in added_experiments:
                     skip_copy = True
                 job = Job(name=d, command=get_exp_command(acc=d, skip_copy=skip_copy),
@@ -135,9 +134,13 @@ def main(acc=None, limit=0, ):
                 if not live:
                     # if j.error or (j.out is not None and 'error' in j.out.lower()):
                     if j.error or (j.out is not None and 'ERROR' in j.out):
+                        try:
+                            msg = j.out.split('<ValidationTree>')[1].split('</ValidationTree>')[0]
+                        except:
+                            msg = 'Error retrieving message'
                         # print('Error in %s\nstd_out:%s\nstd_err:%s' % (j.name, j.out, j.error))
                         f_logger.writelines(['\t'.join([j.name, j.start_time, datetime.datetime.utcnow().isoformat(),
-                                                        '"Error :%s"' % j.error]) + '\n'])
+                                                        '"Error :%s\n%s"' % (j.error, msg)]) + '\n'])
                         # logger.error('Error in %s\nstd_out:%s\nstd_err:%s' % (j.name, j.out, j.error))
                     else:
                         # print('%s OK!\n-----------\n' % j.name)

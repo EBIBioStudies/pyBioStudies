@@ -29,15 +29,18 @@ def as_range(g):
 
 
 def get_ena_link(runs):
-    accessions = sorted(list(set(runs)))
+    accessions = [i.strip() for i in sorted(list(set(runs))) if i.strip()]
+    if not accessions:
+        return ''
     sequential = True
     for i in range(1, len(accessions)):
 
         if int(accessions[i][3:]) - int(accessions[i - 1][3:]) != 1:
             sequential = False
             break
-    if sequential:
+    if sequential and len(accessions) > 1:
         return 'https://www.ebi.ac.uk/ena/browser/view/%s-%s' % (accessions[0], accessions[-1])
+
     return 'https://www.ebi.ac.uk/ena/browser/view/%s' % ','.join(accessions)
 
     runs_int = sorted(
@@ -132,7 +135,7 @@ class MAGETABConverter:
         # self.magetab_files()
         # self.arrays_section()
         # self.study_links()
-        self.protocols()
+        # self.protocols()
         self.score_section()
 
     def chars_and_factors(self, parent_id=None):
@@ -149,6 +152,7 @@ class MAGETABConverter:
                           parent=parent_id,
                           att_name="Factors", id_base='factors')
 
+        added_nodes = []
         for i in range(len(nodes)):
             node = nodes[i]
             next_index = len(header)
@@ -156,6 +160,9 @@ class MAGETABConverter:
                 next_index = nodes[i + 1][0]
             name = node[1]
             n_index = node[0]
+            if name in added_nodes:
+                name = name + '_' + str(added_nodes.count(name))
+            added_nodes.append(node[1])
             _char = [n for n in header[n_index:next_index] if 'characteristics' in n.lower()]
             self.nodes[name] = {'index': n_index, 'next': next_index, 'chars': _char[:]}
             self.get_char_txt(header, sdrf_content, _char,
@@ -326,8 +333,11 @@ class MAGETABConverter:
             )
         # tags = self.tags_section()
         # section_fields.update(tags)
-        extra_tables = self.study_links(
-            parent_id='s-' + self.accession)
+        protocols = self.protocols(parent_id='s-' + self.accession)
+        extra_tables = []
+        if protocols:
+            extra_tables = [self.protocols(parent_id='s-' + self.accession)]
+        extra_tables += self.study_links(parent_id='s-' + self.accession)
 
         self.page_tab.sections.append(
             Section(name='Study', section_id='s-' + self.accession, section_fields=section_fields,
@@ -360,7 +370,13 @@ class MAGETABConverter:
             Section(name=section_name, section_id='score-' + self.accession, section_fields=fields))
 
     def publication(self):
+        pubmeds = []  # Some studies have repeated publications
         for pub in self.idf.publications:
+            pubmed_id = getattr(pub, 'pubmed_id', None)
+            if pubmed_id:
+                if pubmed_id in pubmeds:
+                    continue
+                pubmeds.append(pubmed_id)
             if getattr(pub, 'title', None) or getattr(pub, 'pubmed_id', None) or getattr(pub, 'doi', None):
                 fields = OrderedDict([
                     ("Title", getattr(pub, 'title', '')),
@@ -420,6 +436,8 @@ class MAGETABConverter:
         p_id = 'protocols-' + self.accession
         table = [["Protocols[%s]" % parent_id, "Name", "Type", "[Ontology]", "[TermId]", "Description", "Parameters",
                   "Hardware", "Software", "Contact"]]
+        if not self.idf.protocols:
+            return None
         for p in self.idf.protocols:
             if not (getattr(p, 'name', None)):
                 continue
@@ -427,14 +445,14 @@ class MAGETABConverter:
                    getattr(p, 'term_accession_number', ''), getattr(p, 'description', ''), getattr(p, 'parameters', ''),
                    getattr(p, 'hardware', ''), getattr(p, 'software', ''), getattr(p, 'contact', '')]
             table.append(['' if v is None else v for v in row])
-        # return table
-        self.page_tab.sections.append(
-            Section(
-                name='Protocols',
-                section_id=p_id,
-                parent_id=parent_id,
-                table=table
-            ))
+        return table
+        # self.page_tab.sections.append(
+        #     Section(
+        #         name='Protocols',
+        #         section_id=p_id,
+        #         parent_id=parent_id,
+        #         table=table
+        #     ))
 
     @staticmethod
     def convert_char_dict(s_char_dict, c_names, parent_id, att_name="Characteristics", id_base=''):
@@ -458,7 +476,8 @@ class MAGETABConverter:
                 if '[url]' not in header:
                     header.append('[url]')
             else:
-                row.append(' or '.join('"%s"' % i for i in [v['files']]))
+                cell = '" %s "' % ' OR '.join(['""""%s""""' % i for i in v['files']])
+                row.append(cell)
                 if '[search]' not in header:
                     header.append('[search]')
             rows.append(row)
@@ -558,7 +577,7 @@ class MAGETABConverter:
                     s_char_dict[tuple(vals)] = {"samples": [sample], "files": []}
                     if not self.is_microarray and run_index:
                         s_char_dict[tuple(vals)]['runs'] = [line[run_index]]
-                if raw_index:
+                if raw_index and len(line) > raw_index:
                     s_char_dict[tuple(vals)]["files"].append(line[raw_index])
 
         for tup in s_char_dict.keys():
@@ -843,13 +862,14 @@ class MAGETABConverter:
 if __name__ == '__main__':
     pass
     # adf_convert = ADFConverter('A-AFFY-43', '/tmp/A-AFFY-43')
+    # converter = MAGETABConverter('E-GEOD-41317', '/tmp/E-GEOD-41317')
     # converter = MAGETABConverter('E-MTAB-5555', '/tmp/E-MTAB-5555')
     # converter = MAGETABConverter('E-MTAB-7922', '/tmp/E-MTAB-7922')
     # converter = MAGETABConverter('E-MTAB-6302', '/tmp/E-MTAB-6302')
     # converter = MAGETABConverter('E-MTAB-8888', '/tmp/E-MTAB-8888')
     # converter = MAGETABConverter('E-GEOD-62606', '/tmp/E-GEOD-62606')
     # converter = MAGETABConverter('E-MTAB-8846', '/tmp/E-MTAB-8846')
-    converter = MAGETABConverter('E-MTAB-5200', '/tmp/E-MTAB-5200')
+    converter = MAGETABConverter('E-MTAB-10', '/tmp/E-MTAB-10')
     file_lists = converter.page_tab.export()
     print(file_lists)
     # f = open(os.path.join(converter.out_dir, 'E-MTAB-5782.pagetab.tsv'), 'w')

@@ -178,7 +178,7 @@ def register_user(accession):
     owner = retrieve_owner(accession)
     # print(owner)
     if owner and len(owner) > 0:
-        email = owner[0].useremail
+        email = owner[0].useremail.split(',')[0].strip()
         res = retrieve_user_by_email(email)
         bst_usr = None
         if res and len(res) > 0:
@@ -189,7 +189,7 @@ def register_user(accession):
             # print(owner[0])
             PARAMS = {
                 'name': name,
-                'email': owner[0].useremail + '_1',
+                'email': email + '_1',
                 'password': owner[0].userpassword,
                 'username': owner[0].username,
                 'instanceKey': BACKEND_INSTANCE_KEY,
@@ -199,7 +199,7 @@ def register_user(accession):
             r = requests.post(url=URL, json=PARAMS)
             print(r.status_code)
             bst_usr = retrieve_user_by_email(email + '_1')[0]
-            activate_user_by_id(u_id=bst_usr['id'], email=owner[0].useremail)
+            activate_user_by_id(u_id=bst_usr['id'], email=email)
             bst_usr = retrieve_user_by_email(email)[0]
         bst_usr['password'] = owner[0].userpassword
         if bst_usr['login'] is None:
